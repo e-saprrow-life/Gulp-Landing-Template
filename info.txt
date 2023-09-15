@@ -1,0 +1,2 @@
+== JS
+Для импорта файлов import('fileName.js)
