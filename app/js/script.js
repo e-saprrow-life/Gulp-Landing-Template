@@ -1,4 +1,4 @@
-//== Source: js\modules\hello.js 
+//== Source: modules\hello.js 
 console.log('test')
 
 

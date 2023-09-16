@@ -4,9 +4,19 @@ import gulp from "gulp";
 import plumber from "gulp-plumber";
 import browserSync from "browser-sync";
 import rename from "gulp-rename";
+
 import uglify from 'gulp-uglify';
+
 import fonter from 'gulp-fonter';
 import ttf2woff2 from 'gulp-ttf2woff2';
+
+import dartSass from 'sass';
+import gulpSass from 'gulp-sass';
+const sass = gulpSass(dartSass);
+import autoprefixer from 'gulp-autoprefixer';
+import groupMedia from 'gulp-group-css-media-queries';
+import cssCleaner from 'gulp-clean-css';
+
 import {jsFileImport, importFonts} from './gulp/functions.js'
 
 
@@ -21,12 +31,15 @@ global.app = {
         root: workPath + '',
     },
     dest: {
-        js: workPath + '/js',
-        fonts: workPath + '/fonts'
+        css: workPath + '/css',
+        fonts: workPath + '/fonts',
+        js: workPath + '/js'
     },
     watch: {
         jsScripts: [workPath + '/js/app.js', workPath + '/js/modules/*.js'],
-        jsLibs: [workPath + '/js/libs.js', workPath + '/js/libs/*.js']
+        jsLibs: [workPath + '/js/libs.js', workPath + '/js/libs/*.js'],
+        scss: [workPath + '/scss/**/*.scss', '!' + workPath + '/scss/libs.scss', '!' + workPath + '/scss/libs/**/*.scss'],
+        scssLibs: [workPath + '/scss/libs.scss', workPath + '/scss/libs/**/*.scss']
     }
 }
 
@@ -35,15 +48,15 @@ global.app = {
 function watch() {
     gulp.watch(app.watch.jsScripts, gulp.series(jsScripts, serverReload));
     gulp.watch(app.watch.jsLibs, gulp.series(jsLibs, serverReload));
+    gulp.watch(app.watch.scss, gulp.series(styleCss, serverReload));
+    gulp.watch(app.watch.scssLibs, gulp.series(libsCss, serverReload));
 }
 
 
 
 // Main task
 export const start = gulp.series( 
-    jsScripts,
-    jsLibs,
-    gulp.parallel( watch, serverInit)
+    gulp.parallel(jsScripts, jsLibs, styleCss, libsCss, watch, serverInit)
 );
 
 // Font converter
@@ -104,4 +117,29 @@ function fontsConverter() {
     // ttf to woff2
     .pipe(ttf2woff2())
     .pipe(gulp.dest(app.dest.fonts))
+}
+
+
+
+function styleCss() {
+    return gulp.src(app.src.scss + '/style.scss')
+    .pipe(plumber())
+    .pipe(sass())
+    .pipe(autoprefixer({
+        grid: true,
+        overrideBrowserslist: ["last 3 versions"], // Поддержка трех последних версий
+        cascade: true
+    }))
+    .pipe(groupMedia())
+    .pipe(gulp.dest(app.dest.css))
+}
+
+
+function libsCss() {
+    return gulp.src(app.src.scss + '/libs.scss')
+    .pipe(plumber())
+    .pipe(sass())
+    .pipe(cssCleaner())
+    .pipe(rename({extname: ".min.css"}))
+    .pipe(gulp.dest(app.dest.css))
 }

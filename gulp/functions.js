@@ -24,11 +24,6 @@ export function jsFileImport(file) {
         const excludeRegex1 = /\/\/\s*import\(\s*['"](.+?)['"]\s*\);?\s*/g;
         const excludeRegex2 = /\/\*\s*import\s*\(\s*['"](.+?)['"]\s*\);?\s*\*\/\s*/g;
 
-        // Регулярные выражения @import 'file.js'
-        // const includeRegex = /@import\s*['"](.+?)['"]\s*/g;
-        // const excludeRegex1 = /\/\/\s*@import\s*['"](.+?)['"]\s*/g;
-        // const excludeRegex2 = /\/\*\s*@import\s*['"](.+?)['"]\s*\*\/\s*/g;
-
         // Сохраняю содержимое файла как строку
         const contents = file.contents.toString();
 
@@ -40,8 +35,8 @@ export function jsFileImport(file) {
         .replace(excludeRegex1, '')
         .replace(excludeRegex2, '')
         .replace(includeRegex, (match, includePath) => {
-            let sourcePath = path.resolve(sourceFilePaht, includePath); // получаю путь относительно файла libs.js
-            let map = sourcePath.split('\\app\\')
+            let sourcePath = path.resolve(sourceFilePaht, includePath); // получаю путь относительно файла
+            let map = sourcePath.split('\\js\\')
             if ( !fs.existsSync(sourcePath) ) {
                 return `//== Error: File ${map[1]} not found \n\n\n`
             }
@@ -65,7 +60,7 @@ export function jsFileImport(file) {
  * Формат имени файла - Gilroy-RegularItalic.ttf
  */
 export async function importFonts() {
-    let fontsFilePath = app.src.scss + "/_fonts.scss";
+    let fontsFilePath = app.src.scss + "/main/_fonts.scss";
 
     // Проверяю наличие файла. Если пустой то записываю в него подключение шрифтовЮ если не пустой - то нет
     await fs.readFile(fontsFilePath, 'utf8', (err, data) => {
