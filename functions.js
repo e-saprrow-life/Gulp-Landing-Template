@@ -2,22 +2,20 @@ import fs from "fs";
 import path from "path";
 import through2 from "through2";
 
-function cb() {}
+function cb() { }
 
 //=== JS: 
 
-/** Ищет внутри файла директиву импорта другого js файла в текущий
- * и заменяет ее на содержимое импортируемого файла
- */
+/** Импорт js файлов */
 export function jsFileImport(file) {
-    return through2.obj(function(file, encoding, cb) {
+    return through2.obj(function (file, encoding, cb) {
         if (file.isNull()) {
             cb(null, file);
             return;
         }
 
-        // Путь к исходному файлу относительно корня проекта
-        let sourceFilePaht = path.relative(process.cwd(), file.dirname);
+        // Путь к папке в которой лежит целевой файл относительно корня проекта
+        let dirname = path.relative(process.cwd(), file.dirname);
 
         // Регулярные выражения import('file.js')
         const includeRegex = /import\(\s*['"](.+?)['"]\s*\);?/g;
@@ -27,21 +25,18 @@ export function jsFileImport(file) {
         // Сохраняю содержимое файла как строку
         const contents = file.contents.toString();
 
-        /** Поиск по регулярным выражениям.
-         * если находим @import('path') вставляем содеримое из файла path
-         * если находим закомменченый @import('path') - игнорим 
-         */
+        // Ищем совпадения по регулярным выражениям
         const replacedContents = contents
-        .replace(excludeRegex1, '')
-        .replace(excludeRegex2, '')
-        .replace(includeRegex, (match, includePath) => {
-            let sourcePath = path.resolve(sourceFilePaht, includePath); // получаю путь относительно файла
-            let map = sourcePath.split('\\js\\')
-            if ( !fs.existsSync(sourcePath) ) {
-                return `//== Error: File ${map[1]} not found \n\n\n`
-            }
-            return `//== Source: ${map[1]} \n` + fs.readFileSync(sourcePath, 'utf8') + `\n\n\n`;
-        });
+            .replace(excludeRegex1, '')
+            .replace(excludeRegex2, '')
+            .replace(includeRegex, (match, includePath) => {
+                let sourcePath = path.resolve(dirname, includePath); // получаю путь относительно файла
+                let map = sourcePath.split('\\js\\')
+                if (!fs.existsSync(sourcePath)) {
+                    return `//== Error: File ${map[1]} not found \n\n\n`
+                }
+                return `//== Source: ${map[1]} \n` + fs.readFileSync(sourcePath, 'utf8') + `\n\n\n`;
+            });
 
         // Записываем в конечный файл
         file.contents = Buffer.from(replacedContents);
@@ -53,13 +48,46 @@ export function jsFileImport(file) {
 //=== END JS: 
 
 
+//=== CSS 
+export function svgUrlEncoder(file) {
+    return through2.obj(function (file, encoding, cb) {
+        if (file.isNull()) {
+            cb(null, file);
+            return;
+        }
+
+        /// Путь к папке в которой лежит целевой файл относительно корня проекта
+        let dirname = path.relative(process.cwd(), file.dirname);
+
+        // Регулярные выражения для поиска url который содержит ссылку на svg файл
+        const includeRegex = /url\(['"]([^'"]+\.svg)['"]\)/g;
+
+        // Сохраняю содержимое файла как строку
+        const contents = file.contents.toString();
+
+        // Поиск по регулярным выражениям
+        const replacedContents = contents.replace(includeRegex, (match, includePath) => {
+            let sourcePath = path.resolve(dirname, includePath); // получаю путь относительно файла
+            if (!fs.existsSync(sourcePath)) { return match; }    // Если svg файла нет возвращаю url как есть
+            return `url('data:image/svg+xml;utf8,` + encodeURIComponent(fs.readFileSync(sourcePath, 'utf8')) + `');`;
+        });
+
+        // Записываем в конечный файл
+        file.contents = Buffer.from(replacedContents);
+        this.push(file);
+        cb(null, file);
+    })
+}
+//=== End CSS 
+
+
 
 //=== Fonts:
 
 /** Добавляет в _fonts.scss запись подключения каждого шифта используя миксин
  * Формат имени файла - Gilroy-RegularItalic.ttf
  */
-export async function importFonts() {
+export async function fontsImporter() {
     let fontsFilePath = app.src.scss + "/main/_fonts.scss";
 
     // Проверяю наличие файла. Если пустой то записываю в него подключение шрифтовЮ если не пустой - то нет
@@ -67,21 +95,21 @@ export async function importFonts() {
         if (err) {
             console.error('Ошибка при чтении файла:', err);
         } else {
-          if (data.length > 0) {
-            console.log(`Файл "${fontsFilePath}" не пустой.`);
-          } else {
-            console.log(`Файл "${fontsFilePath}" пустой.`);
-            let files = getFiles(app.src.fonts);
+            if (data.length > 0) {
+                console.log(`Файл "${fontsFilePath}" не пустой.`);
+            } else {
+                console.log(`Файл "${fontsFilePath}" пустой.`);
+                let files = getFiles(app.src.fonts);
 
-            console.log("Подключаю шрифты: ", files)
+                console.log("Подключаю шрифты: ", files)
 
-            fs.writeFileSync(fontsFilePath, '');
-    
-            for (let i in files) {
-                let fontPath = files[i].split('.')[0];
-                fs.appendFile(fontsFilePath, `@include font-face("${getFontFamily(files[i])}", "../fonts/${fontPath}", ${getFontWeight(files[i])}, ${getFontStyle(files[i])});\n`, cb);
+                fs.writeFileSync(fontsFilePath, '');
+
+                for (let i in files) {
+                    let fontPath = files[i].split('.')[0];
+                    fs.appendFile(fontsFilePath, `@include font-face("${getFontFamily(files[i])}", "../fonts/${fontPath}", ${getFontWeight(files[i])}, ${getFontStyle(files[i])});\n`, cb);
+                }
             }
-          }
         }
     });
 
@@ -97,11 +125,11 @@ function getFiles(dir, files = [], subdir) {
         const fullpath = path.join(dir, entry.name);
 
         if (entry.isDirectory()) {
-           getFiles(fullpath, files, entry.name);
+            getFiles(fullpath, files, entry.name);
         } else if (subdir) {
-            if (entry.name.indexOf('.ttf') !== -1)  files.push(subdir + '/' + entry.name);
+            if (entry.name.indexOf('.ttf') !== -1) files.push(subdir + '/' + entry.name);
         } else {
-            if (entry.name.indexOf('.ttf') !== -1)  files.push(entry.name);
+            if (entry.name.indexOf('.ttf') !== -1) files.push(entry.name);
         }
     }
     return files;
