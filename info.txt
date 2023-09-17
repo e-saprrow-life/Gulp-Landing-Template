@@ -1,8 +1,0 @@
-start: 15-09-23
-
-== JS
-Для импорта файлов import('fileName.js)
-
-чекнуть
-- gulp-responsive - разные размеры картинок https://www.npmjs.com/package/gulp-responsive
-- gulp-imacss - автоматически преобразовывает подключенные в CSS изображения PNG, JPG, SVG в Data URI.
