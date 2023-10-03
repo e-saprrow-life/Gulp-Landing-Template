@@ -1,53 +1,52 @@
-const workPath = './app';
+const workPath = './src';
 
 // Common
 import gulp from "gulp";
 import plumber from "gulp-plumber";
 import browserSync from "browser-sync";
 import rename from "gulp-rename";
+import newer from 'gulp-newer';
+import fs from 'fs-extra';
 // Styles
 import * as dartSass from 'sass';
 import gulpSass from 'gulp-sass';
 const sass = gulpSass(dartSass);
-
 import autoprefixer from 'gulp-autoprefixer';
 import groupMedia from 'gulp-group-css-media-queries';
 import cssCleaner from 'gulp-clean-css';
 // JS
 import uglify from 'gulp-uglify';
 // Fonts
-import fonter from 'gulp-fonter';
+import ttf2woff from 'gulp-ttf2woff';
 import ttf2woff2 from 'gulp-ttf2woff2';
+// images
+import imagemin from 'gulp-imagemin';
+import webpConverter from 'gulp-webp';
 // HTML
 import pug from "gulp-pug";
 import htmlBeautify from "gulp-html-beautify";
 // My Functions
-import { jsFileImport, fontsImporter, svgUrlEncoder } from './functions.js'
+import { jsFileImport, fontsImporter, svgUrlEncoder, imgSync } from './functions.js'
 
 
+const src = './src';
+const dist = './dist';
 
 global.app = {
     src: {
-        fonts: workPath + '/fonts',
-        img: workPath + '/img',
-        js: workPath + '/js',
-        pug: workPath + '/pug',
-        scss: workPath + '/scss',
-        root: workPath + '',
+        fonts:  src+'/fonts',
+        scss:   src+'/scss',
+        img:    src+'/img',
+        js:     src+'/js',
+        pug:    src+'/pug',
+        scss:   src+'/scss',
     },
-    dest: {
-        css: workPath + '/css',
-        fonts: workPath + '/fonts',
-        js: workPath + '/js',
-        root: workPath + ''
-    },
-    watch: {
-        jsScripts: [workPath + '/js/app.js', workPath + '/js/modules/*.js'],
-        jsLibs: [workPath + '/js/libs.js', workPath + '/js/libs/*.js'],
-        pug: workPath + '/pug/**/*.pug',
-        scss: [workPath + '/scss/**/*.scss', '!' + workPath + '/scss/libs.scss', '!' + workPath + '/scss/libs/**/*.scss'],
-        scssLibs: [workPath + '/scss/libs.scss', workPath + '/scss/libs/**/*.scss']
-
+    dist: {
+        fonts:  dist+'/fonts',
+        css:    dist+'/css',
+        img:    dist+'/img',
+        js:     dist+'/js',
+        root:   dist+'/'
     },
     ftp: {
         userName: '',
@@ -57,28 +56,35 @@ global.app = {
 }
 
 
-
 function watch() {
-    gulp.watch(app.watch.jsScripts, gulp.series(jsScripts, serverReload));
-    gulp.watch(app.watch.jsLibs, gulp.series(jsLibs, serverReload));
-    gulp.watch(app.watch.pug, gulp.series(html, serverReload));
-    gulp.watch(app.watch.scss, gulp.series(styleCss, serverReload));
-    gulp.watch(app.watch.scssLibs, gulp.series(libsCss, serverReload));
+    gulp.watch(app.src.pug +'/**/*.pug',   gulp.series(pug2html, serverReload));
+    gulp.watch(app.src.img +'/**/*.*',     gulp.series(images, serverReload));
+    gulp.watch(app.src.js  +'/script.js',  gulp.series(jsScripts, serverReload));
+    gulp.watch(app.src.js  +'/libs.js',    gulp.series(jsLibs, serverReload));
+    gulp.watch(app.src.scss+'/style.scss', gulp.series(styleCss, serverReload));
+    gulp.watch(app.src.scss+'/libs.scss',  gulp.series(libsCss, serverReload));
 }
 
 
-
 // Main task
-export const start = gulp.series(
-    gulp.parallel(html, styleCss, libsCss, jsScripts, jsLibs, watch/* , serverInit */)
-);
-
-// Fons
-export const fonts = gulp.series(fontsConverter, fontsImporter);
+// export const start = gulp.series(
+//     gulp.parallel(pug2html, styleCss, libsCss, jsScripts, jsLibs, images, watch)
+// );
 
 
+export const start = gulp.series(resetDist, pug2html, styleCss, libsCss, jsScripts, jsLibs, images, watch);
+export const fonts = gulp.series(fontConverter, fontsImporter);
 
-//= Tasks: 
+
+// test images
+// export const img = gulp.parallel(images, watch);
+// // test js
+// export const js = gulp.parallel(jsScripts, jsLibs , watch);
+// // test pug
+// export const doc = gulp.parallel(pug2html, watch);
+// // test css
+// export const css = gulp.parallel(styleCss, libsCss, watch);
+
 
 function serverInit() {
     browserSync.create();
@@ -89,33 +95,66 @@ function serverInit() {
     });
 }
 
+/** Пересмотреть использование этой функции.  
+ *  Продумать вариант что бы удалялись все ктроме ./dist/fonts
+*/
+async function resetDist() {
+    if (fs.existsSync(dist)) {
+        fs.rm(dist, { recursive: true })
+    };
+    fs.mkdirSync(dist, { recursive: true });
+    return 
+}
+
+
 function serverReload(cb) {
     browserSync.reload();
     cb();
 }
 
 
-
-function fontsConverter() {
-    return gulp.src(app.src.fonts + '/**/*.ttf')
-        .pipe(fonter({ formats: ['woff', 'eot'] }))  // ttf to woff & eot
-        .pipe(gulp.dest(app.dest.fonts))
-        .pipe(ttf2woff2()) // ttf to woff2
-        .pipe(gulp.dest(app.dest.fonts))
+function fontConverter() {
+    return gulp.src(app.src.fonts+'/**/*.ttf')
+    .pipe(gulp.dest(app.dist.fonts))
+    .pipe(gulp.src(app.src.fonts+'/**/*.ttf'))
+    .pipe(ttf2woff()) // ttf to woff
+    .pipe(gulp.dest(app.dist.fonts))
+    .pipe(gulp.src(app.src.fonts+'/**/*.ttf'))
+    .pipe(ttf2woff2()) // ttf to woff2
+    .pipe(gulp.dest(app.dist.fonts))
 }
 
+
+function images() {
+    imgSync(app.src.img, app.dist.img)
+    return gulp.src(app.src.img+'/**/*.*')
+        .pipe(plumber())
+        .pipe(newer(app.dist.img))
+        .pipe(imagemin({
+            progressive: true,
+            svgoPlugins: [{
+                removeViewBox: false
+            }],
+            interLaced: true,
+            optimizationLevel: 4 // 0 - 7 
+        }))
+        .pipe(gulp.dest(app.dist.img))
+        .pipe(webpConverter())
+        .pipe(gulp.dest(app.dist.img))
+}
 
 
 function jsScripts() {
-    return gulp.src(app.src.js + '/app.js')
+    return gulp.src(app.src.js+'/script.js')
         .pipe(plumber())
         .pipe(jsFileImport())
         .pipe(rename({ basename: "script" }))
-        .pipe(gulp.dest(app.dest.js))
+        .pipe(gulp.dest(app.dist.js))
 }
 
+
 function jsLibs() {
-    return gulp.src(app.src.js + '/libs.js')
+    return gulp.src(app.src.js+'/libs.js')
         .pipe(plumber())
         .pipe(jsFileImport())
         .pipe(uglify({
@@ -125,26 +164,23 @@ function jsLibs() {
             }
         }))
         .pipe(rename({ extname: ".min.js" }))
-        .pipe(gulp.dest(app.dest.js))
+        .pipe(gulp.dest(app.dist.js))
 }
 
 
-
-function html() {
-    return gulp.src([app.src.pug + '/*.pug', '!' + app.src.pug + '/**/'])
-        // return gulp.src(app.src.pug + '/*.pug')
+function pug2html() {
+    return gulp.src([ app.src.pug+'/**/*.pug',  '!'+app.src.pug+'/_parts/**/*.pug'])
         .pipe(plumber())
         .pipe(pug())
         .pipe(htmlBeautify({
             "indent_size": 4
         }))
-        .pipe(gulp.dest(app.dest.root))
+        .pipe(gulp.dest(app.dist.root))
 }
 
 
-
 function styleCss() {
-    return gulp.src(app.src.scss + '/style.scss')
+    return gulp.src(app.src.scss+'/style.scss')
         .pipe(plumber())
         .pipe(sass())
         .pipe(autoprefixer({
@@ -154,14 +190,15 @@ function styleCss() {
         }))
         .pipe(groupMedia())
         .pipe(svgUrlEncoder())
-        .pipe(gulp.dest(app.dest.css))
+        .pipe(gulp.dest(app.dist.css))
 }
 
+
 function libsCss() {
-    return gulp.src(app.src.scss + '/libs.scss')
+    return gulp.src(app.src.scss+'/libs.scss')
         .pipe(plumber())
         .pipe(sass())
         .pipe(cssCleaner())
         .pipe(rename({ extname: ".min.css" }))
-        .pipe(gulp.dest(app.dest.css))
+        .pipe(gulp.dest(app.dist.css))
 }

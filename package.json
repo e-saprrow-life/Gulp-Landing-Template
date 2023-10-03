@@ -5,26 +5,29 @@
     "type": "module",
     "scripts": {
         "start": "gulp start",
-        "fonts": "gulp fonts"
+        "fonts": "gulp fonts",
+        "img": "gulp img"
     },
     "author": "Yevhenii Vorobei (Sparrow)",
     "license": "ISC",
     "devDependencies": {
         "browser-sync": "^2.29.3",
+        "fs-extra": "^11.1.1",
         "gulp": "^4.0.2",
         "gulp-autoprefixer": "^8.0.0",
         "gulp-clean-css": "^4.3.0",
-        "gulp-fonter": "^0.3.0",
         "gulp-group-css-media-queries": "^1.2.2",
         "gulp-html-beautify": "^1.0.1",
+        "gulp-imagemin": "^8.0.0",
+        "gulp-newer": "^1.4.0",
         "gulp-plumber": "^1.2.1",
         "gulp-pug": "^5.0.0",
         "gulp-rename": "^2.0.0",
         "gulp-sass": "^5.1.0",
+        "gulp-ttf2woff": "^1.1.1",
         "gulp-ttf2woff2": "^4.0.1",
         "gulp-uglify": "^3.0.2",
-        "i": "^0.3.7",
-        "npm": "^10.1.0",
+        "gulp-webp": "^4.0.1",
         "sass": "^1.67.0",
         "through2": "^4.0.2"
     }

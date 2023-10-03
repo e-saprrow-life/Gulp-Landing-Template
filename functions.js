@@ -1,11 +1,11 @@
-import fs from "fs";
+import fs from "fs-extra";
 import path from "path";
 import through2 from "through2";
 
 function cb() { }
 
-//=== JS: 
 
+//=== JS: 
 /** Импорт js файлов */
 export function jsFileImport(file) {
     return through2.obj(function (file, encoding, cb) {
@@ -45,7 +45,6 @@ export function jsFileImport(file) {
     })
 }
 
-//=== END JS: 
 
 
 //=== CSS 
@@ -60,7 +59,7 @@ export function svgUrlEncoder(file) {
         let dirname = path.relative(process.cwd(), file.dirname);
 
         // Регулярные выражения для поиска url который содержит ссылку на svg файл
-        const includeRegex = /url\(['"]([^'"]+\.svg)['"]\)/g;
+        const includeRegex = /url\(['"]?([^'"]*\.svg)['"]?\)/;
 
         // Сохраняю содержимое файла как строку
         const contents = file.contents.toString();
@@ -69,7 +68,7 @@ export function svgUrlEncoder(file) {
         const replacedContents = contents.replace(includeRegex, (match, includePath) => {
             let sourcePath = path.resolve(dirname, includePath); // получаю путь относительно файла
             if (!fs.existsSync(sourcePath)) { return match; }    // Если svg файла нет возвращаю url как есть
-            return `url('data:image/svg+xml;utf8,` + encodeURIComponent(fs.readFileSync(sourcePath, 'utf8')) + `');`;
+            return `url('data:image/svg+xml;utf8,` + encodeURIComponent(fs.readFileSync(sourcePath, 'utf8')) + `')`;
         });
 
         // Записываем в конечный файл
@@ -78,12 +77,80 @@ export function svgUrlEncoder(file) {
         cb(null, file);
     })
 }
-//=== End CSS 
+
+
+/** Синхрнизирует файлы изображений в папке src и в конечной папке 
+ * При удалении файла из папки src так же удаляет его копии (в разных форматах) в конечной папке.
+*/
+export async function imgSync(srcImgPath, buildImgPath) {
+    try {
+        // Если buildImgPath папки не сужествует выходим
+        if (!fs.existsSync(buildImgPath)) return; 
+
+        // Если не существует srcImgPath удаляем buildImgPath
+        if (!fs.existsSync(srcImgPath) && fs.existsSync(buildImgPath)) {
+            fs.rm(buildImgPath, { recursive: true }, (err) => {
+                if (err) {
+                    console.error(`Не удалось удалить папку: ${err.message}`);
+                } else {
+                    console.log(`Папка ${buildImgPath} успешно удалена.`);
+                }
+            });
+            return;
+        };
+
+        // Получаю масив из имен фалов из папки srcImgPath. Без учета папок внутри. 
+        let srcEntries = fs.readdirSync(srcImgPath, { withFileTypes: true });
+        let srcFiles = []; // Только файлы, без папок. Имена файлов без расширения.
+        for (const file of srcEntries) {
+            if (file.isDirectory()) continue;
+            srcFiles.push(getFileBasename(file.name))
+        }
+
+        // Читаем buildImgPath получаем вхождения - файл или папка внутри buildImgPath
+        const buildEntries = fs.readdirSync(buildImgPath, { withFileTypes: true });
+
+        // Проходимся циклом по каждому элементу в папке buildImgPath
+        for (const entry of buildEntries) {
+            if (entry.isDirectory()) {
+                // Для папки:
+                let buildChildPath = path.join(buildImgPath + '/' + entry.name);
+                let srcChildPath = path.join(srcImgPath + '/' + entry.name);
+                imgSync(srcChildPath, buildChildPath); 
+            } else {
+                // Для файла:
+                let baseName = getFileBasename(entry.name);
+                const filePath = path.join(buildImgPath, entry.name);
+                if (!srcFiles.includes(baseName)) {
+                    fs.unlink(filePath, (err) => {
+                        if (err) { console.error(`Ошибка при удалении файла: ${err}`); } 
+                        else     { console.log(`Файл успешно удален: ${filePath}`); }
+                    });
+                }
+            }
+        }
+        console.log(`Синхронизация папок между ${srcImgPath} и ${buildImgPath} завершена.`);
+    } catch (err) {
+        console.error(`Произошла ошибка: ${err.message}`);
+    }
+
+    /** Возвращает имя файла без раширения. 
+     * Функция работает с определенными форматами.
+     * @formats расширеня файлов
+     * */
+    function getFileBasename(filename) {
+        const formats = ['.svg', '.webp', '.png', '.jpeg', '.jpg'];
+        for (const format of formats) {
+            if (filename.endsWith(format)) {
+                return filename.split(format)[0];
+            }
+        }
+    }
+}
 
 
 
 //=== Fonts:
-
 /** Добавляет в _fonts.scss запись подключения каждого шифта используя миксин
  * Формат имени файла - Gilroy-RegularItalic.ttf
  */
@@ -116,8 +183,6 @@ export async function fontsImporter() {
     return;
 }
 
-
-
 // Возвращает масив с именами фалов в паке app/fonts а так же в подпапках
 function getFiles(dir, files = [], subdir) {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -135,8 +200,6 @@ function getFiles(dir, files = [], subdir) {
     return files;
 }
 
-
-
 // Возвращает font-family шрифта
 function getFontFamily(entry) {
     let fileName = entry.split('/')[1] ? entry.split('/')[1] : entry;
@@ -146,8 +209,6 @@ function getFontFamily(entry) {
         return fileName.split('.')[0]
     }
 }
-
-
 
 // Возвращает font-weight шрифта
 function getFontWeight(entry) {
@@ -173,8 +234,6 @@ function getFontWeight(entry) {
     }
 }
 
-
-
 // Возвращает font-style шрифта
 function getFontStyle(entry) {
     if (entry.toLowerCase().indexOf('italic') !== -1) {
@@ -183,6 +242,3 @@ function getFontStyle(entry) {
         return 'normal'
     }
 }
-
-
-//=== END Fonts:
