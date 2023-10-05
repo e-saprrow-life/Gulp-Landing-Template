@@ -1,3 +1,4 @@
-import('libs/lb1.js')
-import('libs/lb2.js')
-import('libs/lb1.js')
+import('libs/swiper-bundle.min.js')
+
+// https://github.com/michalsnik/aos
+import('libs/aos.js')

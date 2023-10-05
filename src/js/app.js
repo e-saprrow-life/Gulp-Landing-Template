@@ -1,1 +1,3 @@
-console.log('hello it is app.js')
+
+
+console.log(getUrlParameter('test'))

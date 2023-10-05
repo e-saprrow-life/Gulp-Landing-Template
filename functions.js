@@ -4,8 +4,32 @@ import through2 from "through2";
 
 function cb() { }
 
+// Чистит папку dist, за исключением папок и файлов указаных в переменной exclude
+export async function clearDistFolder() {
+    try {
+        let exclude = ['fonts']; 
 
-//=== JS: 
+        let entries = fs.readdirSync(app.dist.root, { withFileTypes: true });
+        for (const entry of entries) {
+            if (exclude.includes(entry.name)) continue;
+            if (entry.isDirectory()) {
+                fs.rm(path.join(app.dist.root, entry.name), { recursive: true });
+                console.log(path.join(app.dist.root, entry.name) + ' удалено')
+            } else {
+                fs.unlink(path.join(app.dist.root, entry.name))
+                console.log(path.join(app.dist.root, entry.name) + ' удалено')
+            }
+        }
+
+        console.log('Папка dist очищена')
+    } catch {
+        console.log('Ошибка очистки папки dist')
+    }
+    return 
+}
+
+
+
 /** Импорт js файлов */
 export function jsFileImport(file) {
     return through2.obj(function (file, encoding, cb) {
@@ -33,9 +57,9 @@ export function jsFileImport(file) {
                 let sourcePath = path.resolve(dirname, includePath); // получаю путь относительно файла
                 let map = sourcePath.split('\\js\\')
                 if (!fs.existsSync(sourcePath)) {
-                    return `//== Error: File ${map[1]} not found \n\n\n`
+                    return `//== Error: File ${map[1]} not found \n\n`
                 }
-                return `//== Source: ${map[1]} \n` + fs.readFileSync(sourcePath, 'utf8') + `\n\n\n`;
+                return `//== Source: ${map[1]} \n` + fs.readFileSync(sourcePath, 'utf8') + `\n\n`;
             });
 
         // Записываем в конечный файл
@@ -45,9 +69,7 @@ export function jsFileImport(file) {
     })
 }
 
-
-
-//=== CSS 
+/** Ищет в css все url() в которых указан svg файл и заменяет на содержимое этого svg файла*/
 export function svgUrlEncoder(file) {
     return through2.obj(function (file, encoding, cb) {
         if (file.isNull()) {
@@ -68,7 +90,8 @@ export function svgUrlEncoder(file) {
         const replacedContents = contents.replace(includeRegex, (match, includePath) => {
             let sourcePath = path.resolve(dirname, includePath); // получаю путь относительно файла
             if (!fs.existsSync(sourcePath)) { return match; }    // Если svg файла нет возвращаю url как есть
-            return `url('data:image/svg+xml;utf8,` + encodeURIComponent(fs.readFileSync(sourcePath, 'utf8')) + `')`;
+            // return `url('data:image/svg+xml;utf8,` + encodeURIComponent(fs.readFileSync(sourcePath, 'utf8')) + `')`;
+            return `url('data:image/svg+xml;utf8,${encodeURIComponent(fs.readFileSync(sourcePath, 'utf8'))}')`;
         });
 
         // Записываем в конечный файл

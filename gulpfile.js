@@ -1,12 +1,9 @@
-const workPath = './src';
-
 // Common
 import gulp from "gulp";
 import plumber from "gulp-plumber";
 import browserSync from "browser-sync";
 import rename from "gulp-rename";
 import newer from 'gulp-newer';
-import fs from 'fs-extra';
 // Styles
 import * as dartSass from 'sass';
 import gulpSass from 'gulp-sass';
@@ -26,85 +23,60 @@ import webpConverter from 'gulp-webp';
 import pug from "gulp-pug";
 import htmlBeautify from "gulp-html-beautify";
 // My Functions
-import { jsFileImport, fontsImporter, svgUrlEncoder, imgSync } from './functions.js'
+import { clearDistFolder, jsFileImport, fontsImporter, svgUrlEncoder, imgSync } from './functions.js'
 
 
 const src = './src';
 const dist = './dist';
 
+
 global.app = {
     src: {
-        fonts:  src+'/fonts',
-        scss:   src+'/scss',
-        img:    src+'/img',
-        js:     src+'/js',
-        pug:    src+'/pug',
-        scss:   src+'/scss',
+        fonts: src+'/fonts',
+        scss:  src+'/scss',
+        img:   src+'/img',
+        js:    src+'/js',
+        pug:   src+'/pug',
+        root:  src
     },
     dist: {
-        fonts:  dist+'/fonts',
-        css:    dist+'/css',
-        img:    dist+'/img',
-        js:     dist+'/js',
-        root:   dist+'/'
-    },
-    ftp: {
-        userName: '',
-        password: '',
-        host: '',
+        fonts: dist+'/fonts',
+        css:   dist+'/css',
+        img:   dist+'/img',
+        js:    dist+'/js',
+        root:  dist+'/'
     }
 }
 
 
 function watch() {
-    gulp.watch(app.src.pug +'/**/*.pug',   gulp.series(pug2html, serverReload));
+    gulp.watch(app.src.root+'/**/*.pug',   gulp.series(pug2html, serverReload));
     gulp.watch(app.src.img +'/**/*.*',     gulp.series(images, serverReload));
-    gulp.watch(app.src.js  +'/script.js',  gulp.series(jsScripts, serverReload));
+    gulp.watch([app.src.js  +'/**/*.js', '!'+app.src.js+'/libs.js', '!'+app.src.js+'/libs/**/*.js'],  gulp.series(jsScripts, serverReload));
     gulp.watch(app.src.js  +'/libs.js',    gulp.series(jsLibs, serverReload));
     gulp.watch(app.src.scss+'/style.scss', gulp.series(styleCss, serverReload));
     gulp.watch(app.src.scss+'/libs.scss',  gulp.series(libsCss, serverReload));
 }
 
 
-// Main task
-// export const start = gulp.series(
-//     gulp.parallel(pug2html, styleCss, libsCss, jsScripts, jsLibs, images, watch)
-// );
+// export const start = gulp.parallel( pug2html, styleCss, libsCss, jsScripts, jsLibs, images, watch, serverInit);
+export const start = gulp.series(
+    clearDistFolder,
+    gulp.parallel(pug2html, styleCss, libsCss, jsScripts, jsLibs, images, watch, serverInit)
+);
 
-
-export const start = gulp.series(resetDist, pug2html, styleCss, libsCss, jsScripts, jsLibs, images, watch);
 export const fonts = gulp.series(fontConverter, fontsImporter);
-
-
-// test images
-// export const img = gulp.parallel(images, watch);
-// // test js
-// export const js = gulp.parallel(jsScripts, jsLibs , watch);
-// // test pug
-// export const doc = gulp.parallel(pug2html, watch);
-// // test css
-// export const css = gulp.parallel(styleCss, libsCss, watch);
 
 
 function serverInit() {
     browserSync.create();
     browserSync.init({
-        server: workPath + '/',
+        server: dist + '/',
         notify: false,
         port: 3000,
     });
 }
 
-/** Пересмотреть использование этой функции.  
- *  Продумать вариант что бы удалялись все ктроме ./dist/fonts
-*/
-async function resetDist() {
-    if (fs.existsSync(dist)) {
-        fs.rm(dist, { recursive: true })
-    };
-    fs.mkdirSync(dist, { recursive: true });
-    return 
-}
 
 
 function serverReload(cb) {
@@ -169,7 +141,7 @@ function jsLibs() {
 
 
 function pug2html() {
-    return gulp.src([ app.src.pug+'/**/*.pug',  '!'+app.src.pug+'/_parts/**/*.pug'])
+    return gulp.src([ app.src.root+'/**/*.pug',  '!'+app.src.pug+'/**/*.pug'])
         .pipe(plumber())
         .pipe(pug())
         .pipe(htmlBeautify({

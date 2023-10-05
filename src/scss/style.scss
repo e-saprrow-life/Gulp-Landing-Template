@@ -1,14 +1,2 @@
 @import 'main/_mixin';
 @import 'main/_fonts';
-
-body {
-    // background: #333333;
-    color: #ffffff;
-    padding: 20px;
-}
-
-.test {
-    height: 300px;
-    width: 300px;
-    background: #adadad center / 200px no-repeat url(../img/success.svg);
-}
