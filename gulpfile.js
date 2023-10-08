@@ -54,16 +54,16 @@ function watch() {
     gulp.watch(app.src.img +'/**/*.*',     gulp.series(images, serverReload));
     gulp.watch([app.src.js  +'/**/*.js', '!'+app.src.js+'/libs.js', '!'+app.src.js+'/libs/**/*.js'],  gulp.series(jsScripts, serverReload));
     gulp.watch(app.src.js  +'/libs.js',    gulp.series(jsLibs, serverReload));
-    gulp.watch(app.src.scss+'/style.scss', gulp.series(styleCss, serverReload));
+    gulp.watch([app.src.scss+'/**/*.scss', '!'+app.src.scss+'/libs/*.scss', '!'+app.src.scss+'/libs.scss'], gulp.series(styleCss, serverReload));
     gulp.watch(app.src.scss+'/libs.scss',  gulp.series(libsCss, serverReload));
 }
 
 
-// export const start = gulp.parallel( pug2html, styleCss, libsCss, jsScripts, jsLibs, images, watch, serverInit);
 export const start = gulp.series(
     clearDistFolder,
     gulp.parallel(pug2html, styleCss, libsCss, jsScripts, jsLibs, images, watch, serverInit)
 );
+
 
 export const fonts = gulp.series(fontConverter, fontsImporter);
 
@@ -153,7 +153,10 @@ function pug2html() {
 
 function styleCss() {
     return gulp.src(app.src.scss+'/style.scss')
-        .pipe(plumber())
+        .pipe(plumber(function () {
+            console.log(123)
+            return; 
+        }))
         .pipe(sass())
         .pipe(autoprefixer({
             grid: true,

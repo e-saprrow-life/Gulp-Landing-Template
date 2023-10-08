@@ -1,0 +1,20 @@
+form#form.form(onsubmit="return sendEmail(form)") 
+    label
+        span Ім'я
+        input(class="" name="name" data-rq)
+    label    
+        span Email
+        input(name="email" type="email" data-rq)
+    label
+        span Телефон
+        input(name="phone" type="tel" data-rq data-inputmask="'mask': '099-99-99-999'")
+    label
+        span Телефон
+        input(name="phone2" type="tel" data-rq data-inputmask="'mask': '099-99-99-999', 'placeholder': '0  -  -  -   '")
+    .hidden 
+        input(type="hidden" name="utm_source")
+        input(type="hidden" name="utm_medium")
+        input(type="hidden" name="utm_term")
+        input(type="hidden" name="utm_campaign")
+        input(type="hidden" name="utm_content")
+    button(type="submit") Надіслати

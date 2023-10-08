@@ -1,0 +1,17 @@
+.form {
+    label {
+        display: block;
+        span {
+            display: block;
+        }
+    }
+
+    input {
+        display: block;
+        width: 100%;
+        padding: 5px 10px;
+        border: 1px solid #333333;
+        margin-bottom: 10px;
+    }
+    
+}

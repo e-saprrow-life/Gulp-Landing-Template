@@ -1,0 +1,73 @@
+* {
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+
+*, *:before, *:after {
+    box-sizing: border-box;
+}
+
+:focus, :active {
+    outline: none;
+}
+
+a:focus, a:active {
+    outline: none;
+}
+
+nav, footer, header, aside {
+    display: block;
+}
+
+.body {
+    line-height: 1;
+    height: 100%;
+    width: 100%;
+    touch-action: pan-x pan-y; // Отключает масштабирование на IOS > 13.5
+    -ms-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+}
+
+input, button, textarea {
+    font-family: inherit;
+}
+
+input::-ms-clear { // Убирает крестик в поле инпута в браузере IE 
+    display: none;
+}
+
+button { // Задает по умолчанию курсор поинтер на всех кнопках
+    cursor: pointer;
+}
+
+button::-moz-focus-inner {
+    padding: 0;
+    border: 0;
+}
+
+a, a:visited {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: none;
+}
+
+ul li {
+    list-style: none; // Убрать точки списка
+}
+
+li::marker {
+    font-size: 0; // Убрать точки списка
+}
+
+img {
+    vertical-align: top;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-size: inherit;
+    font-weight: 400;
+}

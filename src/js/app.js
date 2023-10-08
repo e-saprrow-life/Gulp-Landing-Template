@@ -1,3 +1,4 @@
+/* Скрипты проекта */
 
 
-console.log(getUrlParameter('test'))
+

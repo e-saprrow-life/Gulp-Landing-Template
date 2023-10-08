@@ -50,17 +50,17 @@ export function jsFileImport(file) {
         const contents = file.contents.toString();
 
         // Ищем совпадения по регулярным выражениям
-        const replacedContents = contents
-            .replace(excludeRegex1, '')
-            .replace(excludeRegex2, '')
+        const replacedContents = contents.replace(excludeRegex1, '').replace(excludeRegex2, '')
             .replace(includeRegex, (match, includePath) => {
                 let sourcePath = path.resolve(dirname, includePath); // получаю путь относительно файла
-                let map = sourcePath.split('\\js\\')
+                let map = sourcePath.split('\\src\\')
                 if (!fs.existsSync(sourcePath)) {
                     return `//== Error: File ${map[1]} not found \n\n`
                 }
                 return `//== Source: ${map[1]} \n` + fs.readFileSync(sourcePath, 'utf8') + `\n\n`;
             });
+
+        // console.log(replacedContents)
 
         // Записываем в конечный файл
         file.contents = Buffer.from(replacedContents);
@@ -68,6 +68,8 @@ export function jsFileImport(file) {
         cb(null, file);
     })
 }
+
+
 
 /** Ищет в css все url() в которых указан svg файл и заменяет на содержимое этого svg файла*/
 export function svgUrlEncoder(file) {
@@ -115,8 +117,6 @@ export async function imgSync(srcImgPath, buildImgPath) {
             fs.rm(buildImgPath, { recursive: true }, (err) => {
                 if (err) {
                     console.error(`Не удалось удалить папку: ${err.message}`);
-                } else {
-                    console.log(`Папка ${buildImgPath} успешно удалена.`);
                 }
             });
             return;
@@ -147,12 +147,10 @@ export async function imgSync(srcImgPath, buildImgPath) {
                 if (!srcFiles.includes(baseName)) {
                     fs.unlink(filePath, (err) => {
                         if (err) { console.error(`Ошибка при удалении файла: ${err}`); } 
-                        else     { console.log(`Файл успешно удален: ${filePath}`); }
                     });
                 }
             }
         }
-        console.log(`Синхронизация папок между ${srcImgPath} и ${buildImgPath} завершена.`);
     } catch (err) {
         console.error(`Произошла ошибка: ${err.message}`);
     }

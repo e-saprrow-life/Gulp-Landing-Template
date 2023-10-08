@@ -11,6 +11,7 @@
 }
 
 @mixin desktop { @media (min-width: 1261px) { @content; } }
+@mixin laptop { @media (max-width: 1260px) { @content; } }
 @mixin tablet { @media (max-width: 1260px) { @content; } }
 @mixin mob { @media (max-width: 760px) { @content; } }
 

@@ -1,0 +1,78 @@
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100lvw;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1000;
+   
+    display: grid;
+    place-items: center;
+    padding: 50px 0;
+
+    background: #333333c7;
+    backdrop-filter: blur(0px);
+    transform: translate3d(0, 0, 0);
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transition: opacity var(--tr), backdrop-filter var(--tr), visibility var(--trd);
+    &._visible {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: initial;
+        backdrop-filter: blur(3px);
+        transition: opacity var(--tr), backdrop-filter var(--tr);
+    }
+    &__container {
+        width: initial;
+    }
+
+    &__body {
+        position: relative;
+        min-width: 400px;
+        padding: 20px;
+        background: #ffffff;
+        transform: translateY(30px);
+        transition: transform var(--tr);
+    }
+
+    &._visible {
+        .modal__body {
+            transform: translateY(0);
+        }
+    }
+
+    &__close {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        height: 22px;
+        width: 22px;
+        cursor: pointer;
+        background: #ffffffc4;
+        z-index: 10;
+        &:before, &:after {
+            content:'';
+            display: block;
+            height: 3px;
+            width: 100%;
+            background: #333333;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-50%) rotate(45deg);
+        }
+        &:after {
+            transform: translateX(-50%) translateY(-50%) rotate(-45deg);
+        }
+        @include mob {
+            top: 10px;
+            right: 10px;
+        }
+    }
+}
