@@ -5,6 +5,7 @@ html {
 body {
     width: 100%;
     overflow-x: hidden;
+
     &._lock {
         overflow: hidden;
         height: 100%;
@@ -21,7 +22,8 @@ body {
     min-height: 100vh;
 }
 
-header, footer {
+header,
+footer {
     flex: 0 0 auto;
 }
 
@@ -34,4 +36,43 @@ main {
     max-width: var(--container-w);
     padding: var(--sp, 0) 10px;
     width: 100%;
+}
+
+.custom-radio {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    input {
+        position: relative;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        margin-right: 10px;
+        &::before { // Задает геометрию элемента radio
+            content: '';
+            display: block;
+            top: 50%;
+            left: 50%;
+            background: red;
+            height: 15px;
+            width: 15px;
+            border-radius: 50%;
+        }
+        &:checked { // Активный radio
+
+            &:after {
+                content: '';
+                display: block;
+                height: 50%;
+                width: 50%;
+                background: blue;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                border-radius: 50%;
+            }
+        }
+        
+    }
 }

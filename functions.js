@@ -50,17 +50,13 @@ export function jsFileImport(file) {
         const contents = file.contents.toString();
 
         // Ищем совпадения по регулярным выражениям
-        const replacedContents = contents.replace(excludeRegex1, '').replace(excludeRegex2, '')
+        let replacedContents = contents.replace(excludeRegex1, '').replace(excludeRegex2, '')
             .replace(includeRegex, (match, includePath) => {
                 let sourcePath = path.resolve(dirname, includePath); // получаю путь относительно файла
                 let map = sourcePath.split('\\src\\')
-                if (!fs.existsSync(sourcePath)) {
-                    return `//== Error: File ${map[1]} not found \n\n`
-                }
-                return `//== Source: ${map[1]} \n` + fs.readFileSync(sourcePath, 'utf8') + `\n\n`;
+                if (!fs.existsSync(sourcePath)) return `//== Error: File ${map[1]} not found \n`;
+                return `//== Source: ${map[1]} \n` + fs.readFileSync(sourcePath, 'utf8') + `\n`;
             });
-
-        // console.log(replacedContents)
 
         // Записываем в конечный файл
         file.contents = Buffer.from(replacedContents);

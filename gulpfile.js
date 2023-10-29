@@ -13,6 +13,7 @@ import groupMedia from 'gulp-group-css-media-queries';
 import cssCleaner from 'gulp-clean-css';
 // JS
 import uglify from 'gulp-uglify';
+import commentsStripper from 'gulp-strip-comments';
 // Fonts
 import ttf2woff from 'gulp-ttf2woff';
 import ttf2woff2 from 'gulp-ttf2woff2';
@@ -59,9 +60,17 @@ function watch() {
 }
 
 
+// export const start = gulp.series(
+//     clearDistFolder,
+//     gulp.parallel(pug2html, styleCss, libsCss, jsScripts, jsLibs, images, watch, serverInit)
+// );
 export const start = gulp.series(
     clearDistFolder,
-    gulp.parallel(pug2html, styleCss, libsCss, jsScripts, jsLibs, images, watch, serverInit)
+    pug2html,
+    gulp.parallel(styleCss, libsCss),
+    gulp.parallel(jsScripts),
+    gulp.parallel(jsLibs, images, watch, serverInit)
+    // gulp.parallel(jsLibs, images, watch)
 );
 
 
@@ -74,6 +83,7 @@ function serverInit() {
         server: dist + '/',
         notify: false,
         port: 3000,
+        // https: true
     });
 }
 
@@ -120,6 +130,10 @@ function jsScripts() {
     return gulp.src(app.src.js+'/script.js')
         .pipe(plumber())
         .pipe(jsFileImport())
+        .pipe(commentsStripper({
+            ignore: [/\/\/== Source: (.+)/g, /\/\/== Error: (.+)/g],
+            trim: true
+        }))
         .pipe(rename({ basename: "script" }))
         .pipe(gulp.dest(app.dist.js))
 }

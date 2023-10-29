@@ -17,7 +17,29 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('input[name=utm_content]')?.setAttribute('value', getUrlParameter("utm_content"));
 
 
+    // Custm Select
+    // new CustomSelect('select', {
+    //     listMaxHeight: 400,
+    // });
+
     // Inputmask
     // input(name="phone2" type="tel" data-rq data-inputmask="'mask': '099-99-99-999', 'placeholder': '0  -  -  -   '")
     //Inputmask().mask(document.querySelectorAll('input[data-inputmask]'))
+
+    // ПРОТЕСТИТЬ
+    // let scroll = new SmoothScroll({
+    //     animationTime    : 800, // Время скролла 400 = 0.4 секунды
+    //     stepSize         : 100, // Размер шага в пикселях 
+    //     // Дополнительные настройки:
+    //     accelerationDelta : 20,  // Ускорение 
+    //     accelerationMax   : 2,   // Максимальное ускорение
+    //     keyboardSupport   : true, // Поддержка клавиатуры 
+    //     arrowScroll       : 50, // Шаг скролла стрелками на клавиатуре в пикселях
+    //     // Pulse (less tweakable)
+    //     // ratio of "tail" to "acceleration"
+    //     pulseAlgorithm   : true,
+    //     pulseScale       : 4,
+    //     pulseNormalize   : 1,
+    //     touchpadSupport   : true, // Поддержка тачпада
+    // });
 })

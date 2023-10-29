@@ -1,7 +1,7 @@
-import('_cookies.js')
+import('modules/_cookies.js')
+import('modules/_modal.js')
 import('_sender.js')
-import('_modal.js')
-import('_default.js')
-import('app.js')
 
-// import('_gpt.js')
+import('modules/_default.js')
+
+import('app.js')

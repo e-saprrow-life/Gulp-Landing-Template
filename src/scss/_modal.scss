@@ -9,7 +9,7 @@
     z-index: 1000;
    
     display: grid;
-    place-items: center;
+    // place-items: center;
     padding: 50px 0;
 
     background: #333333c7;
@@ -21,6 +21,9 @@
     pointer-events: none;
 
     transition: opacity var(--tr), backdrop-filter var(--tr), visibility var(--trd);
+    & > * {
+        place-self: center;
+    }
     &._visible {
         opacity: 1;
         visibility: visible;
