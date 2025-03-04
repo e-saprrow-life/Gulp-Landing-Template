@@ -21,7 +21,7 @@ document.querySelectorAll('.modal').forEach(modal => {
     modal.addEventListener('click', function (e) {
         if (e.target.closest('.modal__close') || !e.target.closest('.modal__body'))  closeModal()
     })
-})
+});
 
 // let modals = document.querySelectorAll('.modal');
 // let openClass = '_open'

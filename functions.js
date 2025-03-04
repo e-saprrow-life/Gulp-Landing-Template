@@ -2,13 +2,12 @@ import fs from "fs-extra";
 import path from "path";
 import through2 from "through2";
 
-function cb() { }
+
 
 // Чистит папку dist, за исключением папок и файлов указаных в переменной exclude
-export async function clearDistFolder() {
+export async function clearDist() {
+    let exclude = ['css', 'fonts', 'js']; 
     try {
-        let exclude = ['fonts']; 
-
         let entries = fs.readdirSync(app.dist.root, { withFileTypes: true });
         for (const entry of entries) {
             if (exclude.includes(entry.name)) continue;
@@ -20,7 +19,6 @@ export async function clearDistFolder() {
                 console.log(path.join(app.dist.root, entry.name) + ' удалено')
             }
         }
-
         console.log('Папка dist очищена')
     } catch {
         console.log('Ошибка очистки папки dist')
@@ -67,8 +65,12 @@ export function jsFileImport(file) {
 
 
 
-/** Ищет в css все url() в которых указан svg файл и заменяет на содержимое этого svg файла*/
-export function svgUrlEncoder(file) {
+/** Ищет в css все url() в которых указан svg файл 
+ * и заменяет на содержимое этого svg файла 
+ * url('path/to/file') - Будет заменено
+ * url(path/to/file)   - Не будет заменено
+*/
+export function svgUrlEncoder() {
     return through2.obj(function (file, encoding, cb) {
         if (file.isNull()) {
             cb(null, file);
@@ -76,20 +78,19 @@ export function svgUrlEncoder(file) {
         }
 
         /// Путь к папке в которой лежит целевой файл относительно корня проекта
-        let dirname = path.relative(process.cwd(), file.dirname);
+        let scssFolderPath = path.relative(process.cwd(), file.dirname);
 
         // Регулярные выражения для поиска url который содержит ссылку на svg файл
-        const includeRegex = /url\(['"]?([^'"]*\.svg)['"]?\)/;
+        const includeRegex = /url\(['"]?([^'"]*?\.svg)['"]?\)/g;
 
         // Сохраняю содержимое файла как строку
         const contents = file.contents.toString();
 
         // Поиск по регулярным выражениям
         const replacedContents = contents.replace(includeRegex, (match, includePath) => {
-            let sourcePath = path.resolve(dirname, includePath); // получаю путь относительно файла
-            if (!fs.existsSync(sourcePath)) { return match; }    // Если svg файла нет возвращаю url как есть
-            // return `url('data:image/svg+xml;utf8,` + encodeURIComponent(fs.readFileSync(sourcePath, 'utf8')) + `')`;
-            return `url('data:image/svg+xml;utf8,${encodeURIComponent(fs.readFileSync(sourcePath, 'utf8'))}')`;
+            let svgFilePath = path.resolve(scssFolderPath, includePath); // получаю путь к svg относительно style.scss файла
+            if (!fs.existsSync(svgFilePath)) return match; // Если svg файла нет возвращаю url как есть
+            return `url('data:image/svg+xml;utf8,${encodeURIComponent(fs.readFileSync(svgFilePath, 'utf8'))}')`;
         });
 
         // Записываем в конечный файл
@@ -100,78 +101,12 @@ export function svgUrlEncoder(file) {
 }
 
 
-/** Синхрнизирует файлы изображений в папке src и в конечной папке 
- * При удалении файла из папки src так же удаляет его копии (в разных форматах) в конечной папке.
-*/
-export async function imgSync(srcImgPath, buildImgPath) {
-    try {
-        // Если buildImgPath папки не сужествует выходим
-        if (!fs.existsSync(buildImgPath)) return; 
-
-        // Если не существует srcImgPath удаляем buildImgPath
-        if (!fs.existsSync(srcImgPath) && fs.existsSync(buildImgPath)) {
-            fs.rm(buildImgPath, { recursive: true }, (err) => {
-                if (err) {
-                    console.error(`Не удалось удалить папку: ${err.message}`);
-                }
-            });
-            return;
-        };
-
-        // Получаю масив из имен фалов из папки srcImgPath. Без учета папок внутри. 
-        let srcEntries = fs.readdirSync(srcImgPath, { withFileTypes: true });
-        let srcFiles = []; // Только файлы, без папок. Имена файлов без расширения.
-        for (const file of srcEntries) {
-            if (file.isDirectory()) continue;
-            srcFiles.push(getFileBasename(file.name))
-        }
-
-        // Читаем buildImgPath получаем вхождения - файл или папка внутри buildImgPath
-        const buildEntries = fs.readdirSync(buildImgPath, { withFileTypes: true });
-
-        // Проходимся циклом по каждому элементу в папке buildImgPath
-        for (const entry of buildEntries) {
-            if (entry.isDirectory()) {
-                // Для папки:
-                let buildChildPath = path.join(buildImgPath + '/' + entry.name);
-                let srcChildPath = path.join(srcImgPath + '/' + entry.name);
-                imgSync(srcChildPath, buildChildPath); 
-            } else {
-                // Для файла:
-                let baseName = getFileBasename(entry.name);
-                const filePath = path.join(buildImgPath, entry.name);
-                if (!srcFiles.includes(baseName)) {
-                    fs.unlink(filePath, (err) => {
-                        if (err) { console.error(`Ошибка при удалении файла: ${err}`); } 
-                    });
-                }
-            }
-        }
-    } catch (err) {
-        console.error(`Произошла ошибка: ${err.message}`);
-    }
-
-    /** Возвращает имя файла без раширения. 
-     * Функция работает с определенными форматами.
-     * @formats расширеня файлов
-     * */
-    function getFileBasename(filename) {
-        const formats = ['.svg', '.webp', '.png', '.jpeg', '.jpg'];
-        for (const format of formats) {
-            if (filename.endsWith(format)) {
-                return filename.split(format)[0];
-            }
-        }
-    }
-}
-
-
 
 //=== Fonts:
 /** Добавляет в _fonts.scss запись подключения каждого шифта используя миксин
  * Формат имени файла - Gilroy-RegularItalic.ttf
  */
-export async function fontsImporter() {
+export async function fontsImpor() {
     let fontsFilePath = app.src.scss + "/main/_fonts.scss";
 
     // Проверяю наличие файла. Если пустой то записываю в него подключение шрифтовЮ если не пустой - то нет
@@ -259,3 +194,5 @@ function getFontStyle(entry) {
         return 'normal'
     }
 }
+
+function cb() { }

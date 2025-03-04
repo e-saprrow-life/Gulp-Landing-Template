@@ -7,3 +7,58 @@
 @import '_form';
 @import '_buttons';
 @import '_custom-select';
+
+
+.code {
+    background: #f0f0f0;  
+    padding: 40px 10px;
+    // counter-increment: test;
+    p {
+        margin-bottom: 10px;
+    }
+    code {
+        background: rgb(206, 206, 206);
+        padding: 20px 0 20px 10px;
+        display: block;
+        margin-bottom: -45px;
+        // counter-increment: test;
+        // position: relative;
+        // &:before {
+        //     content: counter(test);
+        //     display: inline-block;
+        //     color: #444444;
+        //     margin-right: 4px;
+        //     position: absolute;
+        //     left: 0;
+        //     top: 50%;
+        //     transform: translateY(-50%);
+        // }
+    }
+    
+    // p:has(code) {
+    //     color: red;
+    // }
+}
+
+
+.floor {
+
+    svg {
+        width: 100%;
+        path:hover {
+            fill: #1c1cff9d !important;
+            fill-opacity: 0.75;
+            cursor: pointer;
+        }
+    }
+}
+
+.wrapper {
+    height: 4000px;
+}
+#video {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: 640px;
+}

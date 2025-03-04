@@ -1,3 +1,11 @@
+/**
+ * Дає змогу стилізувати випадаючий список select
+ * @param listMaxHeight максимальна висота випадаючого списку
+ * Dev name:  Yevhrnii Vorobei
+ * Dev email: e.sparrow.life@gmail.com
+ * 10-2023
+ * */
+
 // Создаю событие для отслеживания при изменении поля програмно
 let _customSelectInputEvent = new Event('input', {bubbles: true});
 

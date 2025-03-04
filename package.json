@@ -18,7 +18,6 @@
         "gulp-clean-css": "^4.3.0",
         "gulp-group-css-media-queries": "^1.2.2",
         "gulp-html-beautify": "^1.0.1",
-        "gulp-imagemin": "^8.0.0",
         "gulp-newer": "^1.4.0",
         "gulp-plumber": "^1.2.1",
         "gulp-pug": "^5.0.0",

@@ -18,13 +18,12 @@ import commentsStripper from 'gulp-strip-comments';
 import ttf2woff from 'gulp-ttf2woff';
 import ttf2woff2 from 'gulp-ttf2woff2';
 // images
-import imagemin from 'gulp-imagemin';
 import webpConverter from 'gulp-webp';
 // HTML
 import pug from "gulp-pug";
 import htmlBeautify from "gulp-html-beautify";
 // My Functions
-import { clearDistFolder, jsFileImport, fontsImporter, svgUrlEncoder, imgSync } from './functions.js'
+import {clearDist, jsFileImport, fontsImpor, svgUrlEncoder } from './functions.js'
 
 
 const src = './src';
@@ -50,49 +49,44 @@ global.app = {
 }
 
 
+
 function watch() {
     gulp.watch(app.src.root+'/**/*.pug',   gulp.series(pug2html, serverReload));
-    gulp.watch(app.src.img +'/**/*.*',     gulp.series(images, serverReload));
+    gulp.watch([app.src.img +'/**/*.*', '!'+app.src.img +'/svg_source/**/*.*'],     gulp.series(images, serverReload));
     gulp.watch([app.src.js  +'/**/*.js', '!'+app.src.js+'/libs.js', '!'+app.src.js+'/libs/**/*.js'],  gulp.series(jsScripts, serverReload));
-    gulp.watch(app.src.js  +'/libs.js',    gulp.series(jsLibs, serverReload));
+    gulp.watch([app.src.js  +'/libs.js', app.src.js  +'/libs/**/*.js'],    gulp.series(jsLibs, serverReload));
     gulp.watch([app.src.scss+'/**/*.scss', '!'+app.src.scss+'/libs/*.scss', '!'+app.src.scss+'/libs.scss'], gulp.series(styleCss, serverReload));
     gulp.watch(app.src.scss+'/libs.scss',  gulp.series(libsCss, serverReload));
 }
 
 
-// export const start = gulp.series(
-//     clearDistFolder,
-//     gulp.parallel(pug2html, styleCss, libsCss, jsScripts, jsLibs, images, watch, serverInit)
-// );
+
 export const start = gulp.series(
-    clearDistFolder,
+    clearDist,
     pug2html,
     gulp.parallel(styleCss, libsCss),
-    gulp.parallel(jsScripts),
-    gulp.parallel(jsLibs, images, watch, serverInit)
-    // gulp.parallel(jsLibs, images, watch)
+    gulp.parallel(jsScripts, jsLibs),
+    gulp.parallel(images),
+    gulp.parallel(watch, serverInit),
 );
 
-
-export const fonts = gulp.series(fontConverter, fontsImporter);
-
+export const fonts = gulp.series(fontConverter, fontsImpor);
 
 function serverInit() {
     browserSync.create();
     browserSync.init({
-        server: dist + '/',
+        server: app.dist.root,
         notify: false,
         port: 3000,
         // https: true
     });
 }
 
-
-
 function serverReload(cb) {
     browserSync.reload();
     cb();
 }
+
 
 
 function fontConverter() {
@@ -107,23 +101,17 @@ function fontConverter() {
 }
 
 
+
 function images() {
-    imgSync(app.src.img, app.dist.img)
-    return gulp.src(app.src.img+'/**/*.*')
+    // imgSync(app.src.img, app.dist.img)
+    return gulp.src([app.src.img+'/**/*.*', '!'+app.src.img+'/svg_source/**/*.*'])
         .pipe(plumber())
         .pipe(newer(app.dist.img))
-        .pipe(imagemin({
-            progressive: true,
-            svgoPlugins: [{
-                removeViewBox: false
-            }],
-            interLaced: true,
-            optimizationLevel: 4 // 0 - 7 
-        }))
         .pipe(gulp.dest(app.dist.img))
         .pipe(webpConverter())
         .pipe(gulp.dest(app.dist.img))
 }
+
 
 
 function jsScripts() {
@@ -137,6 +125,7 @@ function jsScripts() {
         .pipe(rename({ basename: "script" }))
         .pipe(gulp.dest(app.dist.js))
 }
+
 
 
 function jsLibs() {
@@ -154,6 +143,7 @@ function jsLibs() {
 }
 
 
+
 function pug2html() {
     return gulp.src([ app.src.root+'/**/*.pug',  '!'+app.src.pug+'/**/*.pug'])
         .pipe(plumber())
@@ -165,12 +155,10 @@ function pug2html() {
 }
 
 
+
 function styleCss() {
     return gulp.src(app.src.scss+'/style.scss')
-        .pipe(plumber(function () {
-            console.log(123)
-            return; 
-        }))
+        .pipe(plumber())
         .pipe(sass())
         .pipe(autoprefixer({
             grid: true,
@@ -181,6 +169,7 @@ function styleCss() {
         .pipe(svgUrlEncoder())
         .pipe(gulp.dest(app.dist.css))
 }
+
 
 
 function libsCss() {
